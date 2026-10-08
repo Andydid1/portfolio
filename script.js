@@ -1,25 +1,39 @@
-const date = document.getElementById('date')
-const setCurrentYear = () => {
-	const currentYear = new Date().getFullYear()
-	date.textContent = currentYear
-}
-setCurrentYear()
+// keep the footer year current
+document.getElementById('year').textContent = new Date().getFullYear()
 
-// hamburger menu
-const hamburger = document.querySelector('.hamburger')
-const navList = document.querySelector('.nav-list')
-const socials = document.querySelector('.social-nav')
-const navLinks = document.querySelectorAll('.nav-links')
+// highlight the nav link of the section being read
+const navLinks = [...document.querySelectorAll('.nav a')]
+const sections = navLinks.map(link => document.querySelector(link.getAttribute('href')))
 
-const toggleMobileMenu = () => {
-	hamburger.classList.toggle('open')
-	navList.classList.toggle('open')
-	socials.classList.toggle('open')
-	document.body.classList.toggle('open')
+const setActive = active => {
+	navLinks.forEach((link, i) => {
+		if (sections[i] === active) link.setAttribute('aria-current', 'true')
+		else link.removeAttribute('aria-current')
+	})
 }
 
-navLinks.forEach(link => link.addEventListener('click', toggleMobileMenu))
-hamburger.addEventListener('click', toggleMobileMenu)
+const updateActive = () => {
+	const atBottom =
+		window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2
+	if (atBottom) {
+		setActive(sections[sections.length - 1])
+		return
+	}
+	const readingLine = window.innerHeight * 0.4
+	const passed = sections.filter(section => section.getBoundingClientRect().top <= readingLine)
+	setActive(passed.length ? passed[passed.length - 1] : sections[0])
+}
 
-// initialize aos (library for scroll animation)
-AOS.init()
+let ticking = false
+const onScroll = () => {
+	if (ticking) return
+	ticking = true
+	requestAnimationFrame(() => {
+		updateActive()
+		ticking = false
+	})
+}
+
+window.addEventListener('scroll', onScroll, { passive: true })
+window.addEventListener('resize', onScroll)
+updateActive()
